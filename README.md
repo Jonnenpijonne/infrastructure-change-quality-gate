@@ -1,3 +1,6 @@
+
+[![Infrastructure Change Quality Gate](https://github.com/Jonnenpijonne/infrastructure-change-quality-gate/actions/workflows/quality-gate-demo.yml/badge.svg)](https://github.com/Jonnenpijonne/infrastructure-change-quality-gate/actions/workflows/quality-gate-demo.yml)
+
 # Infrastructure Change Quality Gate
 
 DevSecOps-laatuporttijärjestelmä infrastruktuurimuutosten hallintaan.
