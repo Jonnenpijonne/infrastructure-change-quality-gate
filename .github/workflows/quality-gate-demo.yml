@@ -1,0 +1,145 @@
+name: Infrastructure Change Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'templates/**'
+      - 'docs/**'
+      - 'examples/**'
+
+  # Allow manual trigger for demo purposes
+  workflow_dispatch:
+    inputs:
+      change_request_file:
+        description: 'Path to change request file (relative)'
+        required: true
+        default: 'examples/example-change-request.md'
+
+jobs:
+  validate-change-request:
+    name: Quality Gate - Validate Change Request
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Find change request files
+        id: find-files
+        run: |
+          # For manual dispatch, use specified file
+          if [ -n "${{ github.event.inputs.change_request_file }}" ]; then
+            echo "files=${{ github.event.inputs.change_request_file }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # For PRs, find modified change request files
+          FILES=$(git diff --name-only --diff-filter=ACMR \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            -- 'examples/*.md' 'templates/*.md' | tr '\n' ' ')
+
+          if [ -z "$FILES" ]; then
+            echo "No change request files found in this PR."
+            echo "files=" >> "$GITHUB_OUTPUT"
+          else
+            echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run quality gate validation
+        if: steps.find-files.outputs.files != ''
+        run: |
+          echo "=================================================="
+          echo "  Infrastructure Change Quality Gate"
+          echo "  ISO 27001 Aligned Validation"
+          echo "=================================================="
+          echo ""
+
+          VALIDATION_FAILED=0
+
+          for file in ${{ steps.find-files.outputs.files }}; do
+            echo "Validating: $file"
+            echo "--------------------------------------------------"
+
+            python ./validation/pre-merge-checks/validate-change-request.py "$file" || {
+              VALIDATION_FAILED=1
+              echo ""
+              echo "FAILED: $file did not pass quality gate."
+              echo ""
+            }
+          done
+
+          if [ "$VALIDATION_FAILED" -eq 1 ]; then
+            echo ""
+            echo "=================================================="
+            echo "  QUALITY GATE: BLOCKED"
+            echo "  Fix the errors above and update the PR."
+            echo "=================================================="
+            exit 1
+          fi
+
+          echo ""
+          echo "=================================================="
+          echo "  QUALITY GATE: ALL CHECKS PASSED"
+          echo "=================================================="
+
+      - name: Post validation summary
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          echo "## Quality Gate Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.find-files.outputs.files }}" = "" ]; then
+            echo "No change request files detected in this PR." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Validated files: \`${{ steps.find-files.outputs.files }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "See job output for detailed results." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  lint-check:
+    name: Quality Gate - Lint & Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check Python syntax
+        run: |
+          python -m py_compile ./validation/pre-merge-checks/validate-change-request.py
+          echo "Python syntax OK"
+
+      - name: Check for CRLF line endings
+        run: |
+          CRLF_FILES=$(grep -rl $'\r' --include='*.md' --include='*.py' --include='*.yml' . || true)
+          if [ -n "$CRLF_FILES" ]; then
+            echo "ERROR: CRLF line endings detected in:"
+            echo "$CRLF_FILES"
+            exit 1
+          fi
+          echo "Line endings OK (all LF)"
+
+      - name: Check for absolute paths
+        run: |
+          ABS_PATHS=$(grep -rn '[A-Z]:\\' --include='*.md' --include='*.py' --include='*.yml' . || true)
+          UNIX_ABS=$(grep -rn '"/\(Users\|home\|etc\|var\)/' --include='*.md' --include='*.py' --include='*.yml' . || true)
+          if [ -n "$ABS_PATHS" ] || [ -n "$UNIX_ABS" ]; then
+            echo "ERROR: Absolute paths detected:"
+            echo "$ABS_PATHS"
+            echo "$UNIX_ABS"
+            exit 1
+          fi
+          echo "Path check OK (all relative)"

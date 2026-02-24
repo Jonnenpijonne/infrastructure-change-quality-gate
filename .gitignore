@@ -1,0 +1,42 @@
+# Environment and secrets
+.env
+.env.*
+*.secret
+*.key
+*.pem
+
+# Agent/AI temporary files
+.agent/
+.copilot/
+.cursor/
+*.agent.tmp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.log
+
+# Build artifacts
+dist/
+build/

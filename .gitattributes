@@ -1,0 +1,10 @@
+# Enforce LF line endings for all text files (POSIX compatibility)
+* text=auto eol=lf
+
+# Explicitly mark file types
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.json text eol=lf
