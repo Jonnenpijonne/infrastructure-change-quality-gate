@@ -70,6 +70,4 @@ Kehittäjä → PR + muutospyyntö → Automaattinen validointi → Katselmointi
 
 ## Lisenssi
 
-Tämä projekti on julkaistu **Best Bossible License (BBL)**-lisenssillä. Katso `LICENSE`-tiedosto lisätietoja varten.
-
-> Aiemmin README sisälsi rivin "Sisäinen käyttö. Kaikki oikeudet pidätetään." – nyt korvattu avoimella lisenssillä.
+Tämä projekti on lisensoitu MIT-lisenssillä. Katso `LICENSE`-tiedosto lisätietoja varten.
