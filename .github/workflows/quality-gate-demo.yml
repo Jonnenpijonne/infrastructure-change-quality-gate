@@ -9,6 +9,11 @@ on:
       - 'templates/**'
       - 'docs/**'
       - 'examples/**'
+      - 'validation/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+      - 'gatehouse.yaml'
+      - 'install.sh'
 
   # Allow manual trigger for demo purposes
   workflow_dispatch:
@@ -48,11 +53,20 @@ jobs:
             -- 'examples/*.md' 'templates/*.md' | tr '\n' ' ')
 
           if [ -z "$FILES" ]; then
-            echo "No change request files found in this PR."
+            echo "ERROR: No valid change request files found in this PR."
             echo "files=" >> "$GITHUB_OUTPUT"
           else
             echo "files=$FILES" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Fail closed when no valid input file is found
+        if: steps.find-files.outputs.files == ''
+        run: |
+          echo "=================================================="
+          echo "  QUALITY GATE: BLOCKED"
+          echo "  No valid change request files found."
+          echo "=================================================="
+          exit 1
 
       - name: Run quality gate validation
         if: steps.find-files.outputs.files != ''
@@ -97,12 +111,29 @@ jobs:
           echo "## Quality Gate Results" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ steps.find-files.outputs.files }}" = "" ]; then
-            echo "No change request files detected in this PR." >> "$GITHUB_STEP_SUMMARY"
+            echo "❌ No valid change request files detected in this PR." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "Validated files: \`${{ steps.find-files.outputs.files }}\`" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "See job output for detailed results." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  unit-tests:
+    name: Quality Gate - Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run unit tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
 
   lint-check:
     name: Quality Gate - Lint & Syntax
