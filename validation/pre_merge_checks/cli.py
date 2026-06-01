@@ -5,7 +5,11 @@ Infrastructure Change Quality Gate - Muutospyynnon validointi.
 
 import os
 import sys
+from pathlib import Path
 from datetime import datetime, timezone
+
+if __package__ is None or __package__ == "":
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from validation.pre_merge_checks.config import (
     get_allowed_environments,
