@@ -41,3 +41,4 @@ temp/
 dist/
 build/
 !evidence/compliance-reports/
+reports/
