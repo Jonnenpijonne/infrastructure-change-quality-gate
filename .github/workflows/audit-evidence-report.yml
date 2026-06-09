@@ -1,0 +1,43 @@
+name: Gatehouse Audit Evidence Report
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  audit-evidence:
+    name: Generate audit evidence report
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate Markdown audit evidence report
+        shell: bash
+        run: |
+          set +e
+          scripts/generate-audit-report.sh
+          STATUS=$?
+          cat reports/gatehouse-audit-evidence-report.md >> "$GITHUB_STEP_SUMMARY"
+          exit $STATUS
+
+      - name: Upload audit evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatehouse-audit-evidence-${{ github.run_number }}
+          path: reports/
+          retention-days: 90
