@@ -190,7 +190,9 @@ Expected output location: `reports/gatehouse-audit-evidence-report.md`
 
 ## 🔗 RBAC-Lite Integration Example
 
-RBAC-Lite is a WordPress-based multi-tenant access control framework focused on partner-based data isolation and compliance audit logging. This validator can be integrated with RBAC-Lite as a **governance and approval gate** for infrastructure and access management changes.
+**RBAC-Lite** is a lightweight WordPress-based multi-tenant access-control plugin for partner, reseller or subsidiary environments. It focuses on partner isolation, user-to-partner assignment, audit logging and NDA/terms enforcement.
+
+In this repository, RBAC-Lite is used as an example governance use case for validating access-management and tenant-isolation related infrastructure changes before merge.
 
 ### Key Points
 
