@@ -275,10 +275,13 @@ This ensures every change is documented with auditable proof of validation and a
 ## 🌿 Branch Strategy
 
 | Branch | Purpose |
-|--------|---------|
-| `main` | Protected production branch, direct pushes blocked |
-| `develop` | Active development branch |
-| `demo/leadership-demo` | Pre-filled examples for leadership demonstration |
+|---|---|
+| `main` | Default branch and current source of truth. Contains the validated portfolio-ready baseline. |
+| `develop` | Legacy/development branch, retained only if active development requires it. |
+| `demo/johtoportaalle` | Legacy leadership/demo branch. May be updated or removed if no longer needed. |
+| `test/compliance-kit-demo` | Legacy compliance kit test/demo branch. May be updated or removed if no longer needed. |
+
+> Current development should normally start from `main` unless a specific demo or test branch is intentionally maintained.
 
 ---
 
