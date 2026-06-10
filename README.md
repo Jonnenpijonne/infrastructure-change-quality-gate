@@ -1,17 +1,17 @@
 <div align="center">
 
-# 🏛️ Gatehouse Policy Engine
+# 🏛️ Infrastructure Change Quality Gate
 
 **Policy validation engine & approval gates for infrastructure changes**
 
 [![ISO 27001](https://img.shields.io/badge/ISO%2027001-Ready-blue)](https://www.iso.org/standard/27001)
-[![Core](https://img.shields.io/badge/Gatehouse-Core-purple)](#)
+[![Gatehouse Core](https://img.shields.io/badge/Gatehouse-Core-purple)](#)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-yellow)](validation/)
 
 
-[![🏛️ Gatehouse Compliance Check](https://github.com/JonSil89/gatehouse-policy-engine/actions/workflows/compliance-check.yml/badge.svg)](https://github.com/JonSil89/gatehouse-policy-engine/actions/workflows/compliance-check.yml)
-[![Infrastructure Change Quality Qate](https://github.com/JonSil89/gatehouse-policy-engine/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/JonSil89/gatehouse-policy-engine/actions/workflows/quality-gate.yml)
+[![🏛️ Gatehouse Compliance Check](https://github.com/Jonnenpijonne/infrastructure-change-quality-gate/actions/workflows/compliance-check.yml/badge.svg)](https://github.com/Jonnenpijonne/infrastructure-change-quality-gate/actions/workflows/compliance-check.yml)
+[![Infrastructure Change Quality Gate](https://github.com/Jonnenpijonne/infrastructure-change-quality-gate/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/Jonnenpijonne/infrastructure-change-quality-gate/actions/workflows/quality-gate.yml)
 
 </div>
 
@@ -19,7 +19,9 @@
 
 ## 📋 Purpose
 
-This repository implements a **formal change management process for critical infrastructure**. The system is based on ISO 27001 change management controls and provides an automated quality gate that ensures the quality, security, and traceability of every infrastructure change.
+This repository implements a **formal change management process for critical infrastructure**. The system is based on ISO 27001 change management controls and provides an automated quality gate that validates infrastructure change requests, enforces governance policies, and maintains an auditable trail of all changes.
+
+The validator is a **modular, generic policy engine** that can be used as a standalone tool or integrated with governance frameworks like RBAC-Lite.
 
 ---
 
@@ -79,17 +81,25 @@ flowchart LR
 ---
 ```
 . 
-├── .github/workflows/          # CI/CD quality gate
-├── docs/                       # Risk classification
+├── .github/workflows/                  # CI/CD quality gate and audit evidence workflows
+├── docs/                               # Documentation and governance
+│   ├── integrations/
+│   │   └── rbac-lite.md               # RBAC-Lite integration example
 │   ├── risk-matrix.md
 │   └── change-classification.md
-├── templates/                  # Change request templates
+├── templates/                          # Change request templates
 │   ├── change-request-template.md
 │   └── rollback-plan-template.md
-├── validation/                 # Automated validation script
-│   └── pre-merge-checks/
-│       └── validate-change-request.py
-└── examples/                   # Pre-filled examples
+├── validation/                         # Automated validation engines
+│   ├── pre-merge-checks/
+│   │   └── validate-change-request.py # Legacy validator (entry point)
+│   └── pre_merge_checks/
+│       └── cli.py                      # Modular CLI validator
+├── scripts/                            # Audit and reporting tools
+│   └── generate-audit-report.sh       # Local audit evidence report generator
+├── examples/                           # Pre-filled examples
+│   └── rbac-lite-partner-access-change.md
+└── reports/                            # Generated audit evidence (ignored by Git)
 ```
 
 ---
@@ -119,38 +129,38 @@ Test the policy engine in under 2 minutes on your local machine.
 
 **1. Clone and enter the repo**
 ```bash
-git clone https://github.com/JonSil89/gatehouse-policy-engine.git
-cd gatehouse-policy-engine
+git clone https://github.com/Jonnenpijonne/infrastructure-change-quality-gate.git
+cd infrastructure-change-quality-gate
 ```
 
 **2. Test a valid Class 2 change request (should PASS)**
 ```bash
-python3 validation/pre-merge-checks/validate-change-request.py \
-  examples/example-class2-cicd-pipeline-update.md
+python validation/pre-merge-checks/validate-change-request.py \
+  examples/rbac-lite-partner-access-change.md
 ```
-**3. Test a valid Class 3 change request (should PASS)**
+
+**3. Test with the modular CLI validator**
 ```bash
-python3 validation/pre-merge-checks/validate-change-request.py \
- examples/example-class3-production-network-change.md
+python validation/pre_merge_checks/cli.py \
+  examples/rbac-lite-partner-access-change.md
 ```
+
+**4. Run unit tests**
+```bash
+python -m pytest -q
+```
+
 Expected output: `QUALITY GATE: PASSED`
 
-**4. Test an invalid request (should FAIL)**
+**5. Generate local audit evidence report**
 ```bash
-echo "# Empty request" > /tmp/test-fail.md
-python3 validation/pre-merge-checks/validate-change-request.py \
-  /tmp/test-fail.md
+scripts/generate-audit-report.sh examples/rbac-lite-partner-access-change.md
 ```
 
-Expected output: `QUALITY GATE: FAILED`
-
-**5. Clean up**
-```bash
-cd / && rm -rf /tmp/gate_test
-```
+Expected output location: `reports/gatehouse-audit-evidence-report.md`
 
 ### What the validator checks
-- ✅ Required sections present (Perustiedot, Kuvaus, Vaikutusanalyysi)
+- ✅ Required sections present
 - ✅ All mandatory fields filled
 - ✅ Risk class defined and justified (1-3)
 - ✅ Rollback plan present (Class 2-3)
@@ -158,6 +168,91 @@ cd / && rm -rf /tmp/gate_test
 - ✅ Test plan present (Class 2-3)
 - ✅ Freeze period checked (Class 3)
 - ✅ JSON output for CI/CD integration
+
+---
+
+## 🔗 RBAC-Lite Integration Example
+
+RBAC-Lite is a WordPress-based multi-tenant access control framework focused on partner-based data isolation and compliance audit logging. This validator can be integrated with RBAC-Lite as a **governance and quality gate layer** for access control and tenant isolation changes.
+
+### Key Points
+
+- **The validator is generic** and policy-agnostic. RBAC-Lite is one example integration, not hardcoded logic.
+- **Risk classification boundary:**
+  - **Risk Class 2** = validator repository (this project) governance/integration example
+  - **Risk Class 3** = real production RBAC-Lite tenant isolation / partner isolation code changes
+- The validator does not replace RBAC-Lite; it validates whether RBAC-Lite-related changes meet governance and approval requirements before merge.
+
+### Integration Resources
+
+- Documentation: [`docs/integrations/rbac-lite.md`](docs/integrations/rbac-lite.md)
+- Example change request: [`examples/rbac-lite-partner-access-change.md`](examples/rbac-lite-partner-access-change.md)
+- Related repository: [RBAC-Lite](https://github.com/Jonnenpijonne/RBAC-Lite)
+
+### Example Validation Command
+
+```bash
+python validation/pre-merge-checks/validate-change-request.py \
+  examples/rbac-lite-partner-access-change.md
+```
+
+---
+
+## 📊 Audit Evidence Reports
+
+This repository generates local Markdown audit evidence reports to document change validation and approval trails. Reports are suitable for compliance evidence and governance audits.
+
+### Generate Local Report
+
+```bash
+scripts/generate-audit-report.sh examples/rbac-lite-partner-access-change.md
+```
+
+**Output:**
+```
+reports/gatehouse-audit-evidence-report.md
+```
+
+The report includes:
+- Validator JSON output (structured validation results)
+- Risk classification details
+- Approval chain and reviewer evidence
+- Test plan and rollback plan summary
+- Audit trail metadata
+
+### Reports Directory
+
+The `reports/` directory is ignored by Git because audit evidence reports are **generated artifacts**, not source code. Each time you run validation, a new audit evidence report is created with:
+- Validation timestamp
+- Pass/fail status with detailed findings
+- Governance compliance checkpoints
+
+---
+
+## 🤖 GitHub Actions
+
+This repository includes automated CI/CD workflows for continuous quality gate enforcement and audit evidence generation.
+
+### Workflows
+
+| Workflow | Path | Purpose |
+|----------|------|---------|
+| **Quality Gate** | `.github/workflows/quality-gate.yml` | Runs automated validator on all PR change requests |
+| **Quality Gate Demo** | `.github/workflows/quality-gate-demo.yml` | Demonstrates validator with example inputs |
+| **Audit Evidence Report** | `.github/workflows/audit-evidence-report.yml` | Generates and publishes audit evidence as workflow summary |
+| **Compliance Check** | `.github/workflows/compliance-check.yml` | Verifies ISO 27001 compliance gates |
+| **CodeQL / Python Quality** | `.github/workflows/codeql-python.yml` | Security scanning and code quality analysis |
+
+### Audit Evidence Workflow
+
+The audit evidence workflow:
+1. Runs the validator on change requests
+2. Generates a Markdown audit evidence report
+3. **Writes the report to GitHub Actions Summary** (visible in workflow run details)
+4. **Uploads `reports/` as an artifact** with 90-day retention for audit evidence archival
+
+This ensures every change is documented with auditable proof of validation and approval.
+
 ---
 
 ## 🌿 Branch Strategy
@@ -178,11 +273,18 @@ MIT License. See [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-## 🔗 Part of [Gatehouse Infrastructure](https://github.com/JonSil89)
+## 🔗 Infrastructure Change Quality Gate
 
-| Repository | Description |
-|------------|-------------|
-| [🔧 **AI-ITSM-Compliance-Auto**](https://github.com/JonSil89/AI-ITSM-Compliance-Auto) | Intelligent workflow orchestration |
-| [🏠 **HAaaS**](https://github.com/JonSil89/Home-Assistant-as-a-Service-HAaaS-) | IoT lifecycle management platform |
+**A DevSecOps governance and quality gate engine** for infrastructure changes, designed as a **portfolio artifact** demonstrating:
+
+- 🏛️ Formal change management & compliance automation
+- 🔐 ISO 27001 aligned governance controls
+- 📋 Audit evidence and compliance documentation
+- 🔗 Integration with governance frameworks (RBAC-Lite example)
+- 🚀 CI/CD-native policy enforcement
+- 🛡️ Role-based approval workflows
+- 📊 Automated audit trail generation
+
+**Suitable for DevSecOps, governance, operational security, IAM/RBAC, audit evidence, and compliance automation roles.**
 
 </div>
