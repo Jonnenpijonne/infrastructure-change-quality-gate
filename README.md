@@ -17,9 +17,26 @@
 
 ---
 
+## 🎯 High-Level Overview
+
+**Infrastructure Change Quality Gate** is a DevSecOps compliance and governance automation tool for enforcing formal change management processes around infrastructure changes. It provides a lightweight policy validation engine, risk-based approval gates, CI/CD validation, and audit evidence generation for infrastructure change requests.
+
+The project is designed as a portfolio-grade implementation of ISO 27001-aligned change management controls, with practical examples for infrastructure, access management and RBAC/IAM governance use cases.
+
+It demonstrates:
+
+- automated validation of Markdown-based change requests
+- risk classification and approval requirements
+- rollback, test plan and freeze-window checks
+- GitHub Actions quality gates
+- local Markdown audit evidence reporting
+- integration-oriented governance examples such as RBAC-Lite
+
+---
+
 ## 📋 Purpose
 
-This repository implements a **formal change management process for critical infrastructure**. The system is based on ISO 27001 change management controls and provides an automated quality gate that validates infrastructure change requests, enforces governance policies, and maintains an auditable trail of all changes.
+This repository implements a **formal change management process for critical infrastructure**. The system is based on ISO 27001 change management controls and provides an automated quality gate that validates change requests before merge.
 
 The validator is a **modular, generic policy engine** that can be used as a standalone tool or integrated with governance frameworks like RBAC-Lite.
 
@@ -173,7 +190,7 @@ Expected output location: `reports/gatehouse-audit-evidence-report.md`
 
 ## 🔗 RBAC-Lite Integration Example
 
-RBAC-Lite is a WordPress-based multi-tenant access control framework focused on partner-based data isolation and compliance audit logging. This validator can be integrated with RBAC-Lite as a **governance and quality gate layer** for access control and tenant isolation changes.
+RBAC-Lite is a WordPress-based multi-tenant access control framework focused on partner-based data isolation and compliance audit logging. This validator can be integrated with RBAC-Lite as a **governance and approval gate** for infrastructure and access management changes.
 
 ### Key Points
 
