@@ -4,7 +4,7 @@
 
 Infrastruktuurimuutokset luokitellaan kolmeen luokkaan riskimatriisin perusteella. Jokainen luokka määrittää vaaditut kontrollit, hyväksyntäketjun ja dokumentaation tason.
 
-Luokittelu perustuu ISO 27001 -standardin kontrolliin A.12.1.2 (Change Management).
+Luokittelu on tämän projektin **referenssimalli** ja se tukee erityisesti ISO/IEC 27001:2022 Annex A 8.32 -kontrollin mukaista change management -ajattelua. Se ei sellaisenaan muodosta organisaation ISO 27001 -vaatimustenmukaisuutta, vaan tuotantokäytössä luokat ja hyväksyntävaatimukset pitää sovittaa organisaation omaan riskienhallintaan, politiikkoihin ja Statement of Applicabilityyn.
 
 ---
 
@@ -97,8 +97,14 @@ Kommunikaatio              Ei          Tiimi       Laaja
 Freeze-check               Ei          Ei          Kyllä
 ```
 
-## Viitteet
+## ISO/IEC 27001:2022 -viitteet
 
-- [Riskimatriisi](./risk-matrix.md)
-- ISO 27001:2022, A.12.1.2 — Change Management
-- ISO 27001:2022, A.14.2.2 — System Change Control Procedures
+Projektin kannalta olennaisimmat referenssikontrollit ovat:
+
+- **A.8.32 — Change management**: muutosten suunnittelu, arviointi, hyväksyntä, testaus ja hallittu toteutus.
+- **A.8.15 — Logging**: tapahtuma- ja audit-lokien tuottaminen ja käsittely.
+- **A.5.37 — Documented operating procedures**: tarvittavien operatiivisten menettelyjen dokumentointi.
+
+Katso myös [riskimatriisi](./risk-matrix.md).
+
+> Huom: projektin vanhemmissa, historiallisissa evidence-esimerkeissä voi edelleen näkyä ISO/IEC 27001:2013 -version tunnuksia kuten A.12.1.2, A.14.2.2 ja A.12.4.1. Niitä ei tule tulkita 2022-version kontrollinumeroiksi.
