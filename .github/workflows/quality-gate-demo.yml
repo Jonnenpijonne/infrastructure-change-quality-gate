@@ -14,6 +14,9 @@ on:
       - '.github/workflows/**'
       - 'gatehouse.yaml'
       - 'install.sh'
+      - 'ARCHITECTURE.md'
+      - 'SECURITY.md'
+      - 'README.md'
 
   # Allow manual trigger for demo purposes
   workflow_dispatch:
@@ -28,52 +31,68 @@ jobs:
     name: Quality Gate - Validate Change Request
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Find change request files
+      - name: Find validation input files
         id: find-files
+        shell: bash
         run: |
-          # For manual dispatch, use specified file
+          set -e
+
+          # Manual dispatch: validate exactly the file selected by the caller.
           if [ -n "${{ github.event.inputs.change_request_file }}" ]; then
-            echo "files=${{ github.event.inputs.change_request_file }}" >> "$GITHUB_OUTPUT"
+            FILE="${{ github.event.inputs.change_request_file }}"
+            if [ ! -f "$FILE" ]; then
+              echo "ERROR: Requested validation file does not exist: $FILE"
+              exit 1
+            fi
+            echo "files=$FILE" >> "$GITHUB_OUTPUT"
+            echo "source=manual" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # For PRs, find modified change request files
+          # Pull requests: validate modified change-request/template files when present.
           FILES=$(git diff --name-only --diff-filter=ACMR \
             "${{ github.event.pull_request.base.sha }}" \
             "${{ github.event.pull_request.head.sha }}" \
             -- 'examples/*.md' 'templates/*.md' | tr '\n' ' ')
 
-          if [ -z "$FILES" ]; then
-            echo "ERROR: No valid change request files found in this PR."
-            echo "files=" >> "$GITHUB_OUTPUT"
-          else
+          if [ -n "$FILES" ]; then
             echo "files=$FILES" >> "$GITHUB_OUTPUT"
+            echo "source=changed_inputs" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-      - name: Fail closed when no valid input file is found
-        if: steps.find-files.outputs.files == ''
-        run: |
-          echo "=================================================="
-          echo "  QUALITY GATE: BLOCKED"
-          echo "  No valid change request files found."
-          echo "=================================================="
-          exit 1
+          # Docs/workflow/validator-only PRs still exercise the policy engine against
+          # a known valid baseline instead of failing merely because no input document
+          # was modified in the PR.
+          SMOKE_TEST="examples/example-class2-cicd-pipeline-update.md"
+          if [ ! -f "$SMOKE_TEST" ]; then
+            echo "ERROR: Smoke-test input is missing: $SMOKE_TEST"
+            exit 1
+          fi
+
+          echo "files=$SMOKE_TEST" >> "$GITHUB_OUTPUT"
+          echo "source=smoke_test" >> "$GITHUB_OUTPUT"
 
       - name: Run quality gate validation
-        if: steps.find-files.outputs.files != ''
         run: |
           echo "=================================================="
           echo "  Infrastructure Change Quality Gate"
-          echo "  ISO 27001 Aligned Validation"
+          echo "  ISO 27001-aligned validation"
+          echo "  Input source: ${{ steps.find-files.outputs.source }}"
           echo "=================================================="
           echo ""
 
@@ -95,7 +114,7 @@ jobs:
             echo ""
             echo "=================================================="
             echo "  QUALITY GATE: BLOCKED"
-            echo "  Fix the errors above and update the PR."
+            echo "  Fix the validation errors above and update the PR."
             echo "=================================================="
             exit 1
           fi
@@ -110,17 +129,22 @@ jobs:
         run: |
           echo "## Quality Gate Results" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ steps.find-files.outputs.files }}" = "" ]; then
-            echo "❌ No valid change request files detected in this PR." >> "$GITHUB_STEP_SUMMARY"
+          echo "Input source: \`${{ steps.find-files.outputs.source }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Validated files: \`${{ steps.find-files.outputs.files }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.find-files.outputs.source }}" = "smoke_test" ]; then
+            echo "No change-request/template input was modified in this PR, so the validator was exercised against the known valid baseline." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Validated files: \`${{ steps.find-files.outputs.files }}\`" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "See job output for detailed results." >> "$GITHUB_STEP_SUMMARY"
+            echo "The modified validation input(s) were checked directly." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   unit-tests:
     name: Quality Gate - Unit Tests
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -138,6 +162,9 @@ jobs:
   lint-check:
     name: Quality Gate - Lint & Syntax
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
