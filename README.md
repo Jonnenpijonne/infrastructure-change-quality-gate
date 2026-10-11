@@ -37,6 +37,7 @@ See also:
 - [Security policy](SECURITY.md)
 - [Change classification](docs/change-classification.md)
 - [Risk matrix](docs/risk-matrix.md)
+- [Security Control Plane integration demo](https://github.com/Jonnenpijonne/security-control-plane-portfolio) — connects incidents, operational tickets, governance actions and evidence without replacing their source systems
 
 ---
 
